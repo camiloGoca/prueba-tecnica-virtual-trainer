@@ -1,4 +1,10 @@
-import { computed, ref, type ComputedRef, type Ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, type ComputedRef, type Ref } from 'vue'
+import {
+  actualizarEntrenamiento as actualizarEntrenamientoFirestore,
+  eliminarEntrenamiento as eliminarEntrenamientoFirestore,
+  escucharEntrenamientos,
+  guardarEntrenamiento,
+} from '@/services/entrenamientoService'
 import type { Entrenamiento } from '@/types/Entrenamiento'
 
 interface UseEntrenamientos {
@@ -6,33 +12,21 @@ interface UseEntrenamientos {
   entrenamientosOrdenados: ComputedRef<Entrenamiento[]>
   entrenamientoEnEdicion: Ref<Entrenamiento | null>
   estaEditando: ComputedRef<boolean>
-  crearEntrenamiento: (entrenamiento: Entrenamiento) => void
-  eliminarEntrenamiento: (id: string) => void
+  cargando: Ref<boolean>
+  error: Ref<string | null>
+  crearEntrenamiento: (entrenamiento: Entrenamiento) => Promise<void>
+  eliminarEntrenamiento: (id: string) => Promise<void>
   iniciarEdicion: (entrenamiento: Entrenamiento) => void
   cancelarEdicion: () => void
-  actualizarEntrenamiento: (entrenamiento: Entrenamiento) => void
+  actualizarEntrenamiento: (entrenamiento: Entrenamiento) => Promise<void>
 }
 
-const entrenamientosIniciales: Entrenamiento[] = [
-  {
-    id: 'demo-1',
-    fecha: '2026-07-25',
-    duracion: 42,
-    distancia: 6.4,
-  },
-  {
-    id: 'demo-2',
-    fecha: '2026-07-27',
-    duracion: 35,
-    distancia: 5,
-  },
-]
-
-const generarIdTemporal = (): string => crypto.randomUUID()
-
 export const useEntrenamientos = (): UseEntrenamientos => {
-  const entrenamientos = ref<Entrenamiento[]>(entrenamientosIniciales)
+  const entrenamientos = ref<Entrenamiento[]>([])
   const entrenamientoEnEdicion = ref<Entrenamiento | null>(null)
+  const cargando = ref<boolean>(true)
+  const error = ref<string | null>(null)
+  const unsubscribe = ref<(() => void) | null>(null)
 
   const entrenamientosOrdenados = computed<Entrenamiento[]>(() =>
     [...entrenamientos.value].sort(
@@ -44,18 +38,29 @@ export const useEntrenamientos = (): UseEntrenamientos => {
 
   const estaEditando = computed<boolean>(() => Boolean(entrenamientoEnEdicion.value))
 
-  const crearEntrenamiento = (entrenamiento: Entrenamiento): void => {
-    entrenamientos.value = [
-      ...entrenamientos.value,
-      {
-        ...entrenamiento,
-        id: generarIdTemporal(),
-      },
-    ]
+  const limpiarError = (): void => {
+    error.value = null
   }
 
-  const eliminarEntrenamiento = (id: string): void => {
-    entrenamientos.value = entrenamientos.value.filter((entrenamiento) => entrenamiento.id !== id)
+  const crearEntrenamiento = async (entrenamiento: Entrenamiento): Promise<void> => {
+    limpiarError()
+
+    try {
+      await guardarEntrenamiento(entrenamiento)
+    } catch {
+      error.value = 'No fue posible guardar el entrenamiento.'
+    }
+  }
+
+  const eliminarEntrenamiento = async (id: string): Promise<void> => {
+    limpiarError()
+
+    try {
+      await eliminarEntrenamientoFirestore(id)
+    } catch {
+      error.value = 'No fue posible eliminar el entrenamiento.'
+      return
+    }
 
     if (entrenamientoEnEdicion.value?.id === id) {
       cancelarEdicion()
@@ -70,23 +75,46 @@ export const useEntrenamientos = (): UseEntrenamientos => {
     entrenamientoEnEdicion.value = null
   }
 
-  const actualizarEntrenamiento = (entrenamientoActualizado: Entrenamiento): void => {
+  const actualizarEntrenamiento = async (entrenamientoActualizado: Entrenamiento): Promise<void> => {
     if (!entrenamientoActualizado.id) {
       return
     }
 
-    entrenamientos.value = entrenamientos.value.map((entrenamiento) =>
-      entrenamiento.id === entrenamientoActualizado.id ? entrenamientoActualizado : entrenamiento,
-    )
+    limpiarError()
+    try {
+      await actualizarEntrenamientoFirestore(entrenamientoActualizado)
+    } catch {
+      error.value = 'No fue posible actualizar el entrenamiento.'
+      return
+    }
 
     cancelarEdicion()
   }
+
+  onMounted(() => {
+    unsubscribe.value = escucharEntrenamientos(
+      (entrenamientosActualizados) => {
+        entrenamientos.value = entrenamientosActualizados
+        cargando.value = false
+      },
+      () => {
+        error.value = 'No fue posible cargar los entrenamientos.'
+        cargando.value = false
+      },
+    )
+  })
+
+  onUnmounted(() => {
+    unsubscribe.value?.()
+  })
 
   return {
     entrenamientos,
     entrenamientosOrdenados,
     entrenamientoEnEdicion,
     estaEditando,
+    cargando,
+    error,
     crearEntrenamiento,
     eliminarEntrenamiento,
     iniciarEdicion,

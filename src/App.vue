@@ -8,6 +8,8 @@ const {
   entrenamientosOrdenados,
   entrenamientoEnEdicion,
   estaEditando,
+  cargando,
+  error,
   crearEntrenamiento,
   eliminarEntrenamiento,
   iniciarEdicion,
@@ -15,12 +17,12 @@ const {
   actualizarEntrenamiento,
 } = useEntrenamientos()
 
-const guardarEntrenamiento = (entrenamiento: Entrenamiento): void => {
-  crearEntrenamiento(entrenamiento)
+const guardarEntrenamiento = async (entrenamiento: Entrenamiento): Promise<void> => {
+  await crearEntrenamiento(entrenamiento)
 }
 
-const actualizarEntrenamientoSeleccionado = (entrenamiento: Entrenamiento): void => {
-  actualizarEntrenamiento(entrenamiento)
+const actualizarEntrenamientoSeleccionado = async (entrenamiento: Entrenamiento): Promise<void> => {
+  await actualizarEntrenamiento(entrenamiento)
 }
 </script>
 
@@ -47,6 +49,8 @@ const actualizarEntrenamientoSeleccionado = (entrenamiento: Entrenamiento): void
 
       <TrainingList
         :entrenamientos="entrenamientosOrdenados"
+        :cargando="cargando"
+        :error="error"
         @editar="iniciarEdicion"
         @eliminar="eliminarEntrenamiento"
       />

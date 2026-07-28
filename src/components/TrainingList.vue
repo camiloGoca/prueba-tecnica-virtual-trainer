@@ -4,6 +4,8 @@ import type { Entrenamiento } from '@/types/Entrenamiento'
 
 interface Props {
   entrenamientos: Entrenamiento[]
+  cargando: boolean
+  error: string | null
 }
 
 defineProps<Props>()
@@ -29,7 +31,17 @@ const eliminarEntrenamiento = (id: string): void => {
       <h2 id="history-title">Entrenamientos registrados</h2>
     </div>
 
-    <div v-if="entrenamientos.length > 0" class="training-list">
+    <div v-if="cargando" class="empty-state">
+      <p class="empty-title">Cargando entrenamientos</p>
+      <p>Estamos consultando el historial en Firestore.</p>
+    </div>
+
+    <div v-else-if="error" class="empty-state empty-state-error">
+      <p class="empty-title">No se pudo cargar el historial</p>
+      <p>{{ error }}</p>
+    </div>
+
+    <div v-else-if="entrenamientos.length > 0" class="training-list">
       <TrainingCard
         v-for="entrenamiento in entrenamientos"
         :key="entrenamiento.id"
