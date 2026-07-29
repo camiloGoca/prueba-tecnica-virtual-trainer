@@ -1,15 +1,20 @@
 <script setup lang="ts">
 import TrainingForm from '@/components/TrainingForm.vue'
+import TrainingFilters from '@/components/TrainingFilters.vue'
 import TrainingList from '@/components/TrainingList.vue'
 import { useEntrenamientos } from '@/composables/useEntrenamientos'
 import type { Entrenamiento } from '@/types/Entrenamiento'
 
 const {
-  entrenamientosOrdenados,
+  entrenamientos,
+  entrenamientosFiltrados,
   entrenamientoEnEdicion,
   estaEditando,
+  fechaInicioFiltro,
+  fechaFinFiltro,
   cargando,
   error,
+  limpiarFiltros,
   crearEntrenamiento,
   eliminarEntrenamiento,
   iniciarEdicion,
@@ -47,13 +52,23 @@ const actualizarEntrenamientoSeleccionado = async (entrenamiento: Entrenamiento)
         @cancelar="cancelarEdicion"
       />
 
-      <TrainingList
-        :entrenamientos="entrenamientosOrdenados"
-        :cargando="cargando"
-        :error="error"
-        @editar="iniciarEdicion"
-        @eliminar="eliminarEntrenamiento"
-      />
+      <div class="history-panel">
+        <TrainingFilters
+          v-model:fecha-inicio="fechaInicioFiltro"
+          v-model:fecha-fin="fechaFinFiltro"
+          :total-resultados="entrenamientosFiltrados.length"
+          :total-entrenamientos="entrenamientos.length"
+          @limpiar="limpiarFiltros"
+        />
+
+        <TrainingList
+          :entrenamientos="entrenamientosFiltrados"
+          :cargando="cargando"
+          :error="error"
+          @editar="iniciarEdicion"
+          @eliminar="eliminarEntrenamiento"
+        />
+      </div>
     </section>
   </main>
 </template>

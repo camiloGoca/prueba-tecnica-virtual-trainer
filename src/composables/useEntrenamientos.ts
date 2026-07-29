@@ -10,10 +10,14 @@ import type { Entrenamiento } from '@/types/Entrenamiento'
 interface UseEntrenamientos {
   entrenamientos: Ref<Entrenamiento[]>
   entrenamientosOrdenados: ComputedRef<Entrenamiento[]>
+  entrenamientosFiltrados: ComputedRef<Entrenamiento[]>
   entrenamientoEnEdicion: Ref<Entrenamiento | null>
   estaEditando: ComputedRef<boolean>
+  fechaInicioFiltro: Ref<string>
+  fechaFinFiltro: Ref<string>
   cargando: Ref<boolean>
   error: Ref<string | null>
+  limpiarFiltros: () => void
   crearEntrenamiento: (entrenamiento: Entrenamiento) => Promise<void>
   eliminarEntrenamiento: (id: string) => Promise<void>
   iniciarEdicion: (entrenamiento: Entrenamiento) => void
@@ -24,6 +28,8 @@ interface UseEntrenamientos {
 export const useEntrenamientos = (): UseEntrenamientos => {
   const entrenamientos = ref<Entrenamiento[]>([])
   const entrenamientoEnEdicion = ref<Entrenamiento | null>(null)
+  const fechaInicioFiltro = ref<string>('')
+  const fechaFinFiltro = ref<string>('')
   const cargando = ref<boolean>(true)
   const error = ref<string | null>(null)
   const unsubscribe = ref<(() => void) | null>(null)
@@ -38,8 +44,23 @@ export const useEntrenamientos = (): UseEntrenamientos => {
 
   const estaEditando = computed<boolean>(() => Boolean(entrenamientoEnEdicion.value))
 
+  const entrenamientosFiltrados = computed<Entrenamiento[]>(() =>
+    entrenamientosOrdenados.value.filter((entrenamiento) => {
+      const cumpleFechaInicio =
+        !fechaInicioFiltro.value || entrenamiento.fecha >= fechaInicioFiltro.value
+      const cumpleFechaFin = !fechaFinFiltro.value || entrenamiento.fecha <= fechaFinFiltro.value
+
+      return cumpleFechaInicio && cumpleFechaFin
+    }),
+  )
+
   const limpiarError = (): void => {
     error.value = null
+  }
+
+  const limpiarFiltros = (): void => {
+    fechaInicioFiltro.value = ''
+    fechaFinFiltro.value = ''
   }
 
   const crearEntrenamiento = async (entrenamiento: Entrenamiento): Promise<void> => {
@@ -111,10 +132,14 @@ export const useEntrenamientos = (): UseEntrenamientos => {
   return {
     entrenamientos,
     entrenamientosOrdenados,
+    entrenamientosFiltrados,
     entrenamientoEnEdicion,
     estaEditando,
+    fechaInicioFiltro,
+    fechaFinFiltro,
     cargando,
     error,
+    limpiarFiltros,
     crearEntrenamiento,
     eliminarEntrenamiento,
     iniciarEdicion,

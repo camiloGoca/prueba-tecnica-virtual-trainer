@@ -118,6 +118,50 @@ h2 {
   padding: 24px;
 }
 
+.history-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.training-filters {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #dce5ef;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 18px;
+  box-shadow: 0 18px 45px rgba(26, 39, 64, 0.08);
+}
+
+.filter-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.filter-field {
+  margin-bottom: 0;
+}
+
+.filter-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filter-summary p {
+  margin-bottom: 0;
+  color: #66768a;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.compact-button {
+  min-height: 38px;
+}
+
 .section-heading {
   display: grid;
   gap: 8px;
@@ -340,10 +384,20 @@ input[aria-invalid='true'] {
     padding: 18px;
   }
 
+  .filter-fields,
   .form-row,
   .training-card,
   .metric-grid {
     grid-template-columns: 1fr;
+  }
+
+  .filter-summary {
+    align-items: stretch;
+  }
+
+  .filter-summary p,
+  .filter-summary button {
+    width: 100%;
   }
 
   .card-actions {
